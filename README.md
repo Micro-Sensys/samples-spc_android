@@ -2,7 +2,7 @@
 
 This sample code is for **SPC** communication (devices in SPC mode) on Android devices.
 
-[SPC communication mode](../doc/communication-modes/spc)
+[Test LINK: SPC communication mode](../doc/communication-modes/spc)
 //TODO Add link See "communication-modes/spc"
 
 ## Requirements
@@ -14,9 +14,6 @@ This sample code is for **SPC** communication (devices in SPC mode) on Android d
 * RFID transponders
 
 > For compatible script files, check [Useful Links](#Useful-Links)
-
-[Useful Links](#Useful Links)
-//TODO link to Useful Links!
 
 ## Implementation
 This code shows how to use **SpcInterfaceControl** class to communicate with a device running on SPC mode. 
