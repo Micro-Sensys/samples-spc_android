@@ -1,6 +1,7 @@
 # samples-spc_android / Android SPC sample codes
 
 This sample code is for **SPC** communication (devices in SPC mode) on Android devices.
+
 //TODO Add link See "communication-modes/spc"
 
 ## Requirements
@@ -13,6 +14,7 @@ This sample code is for **SPC** communication (devices in SPC mode) on Android d
 
 > For script check [Useful Links](#Useful Links)
 
+[Useful Links](#Useful Links)
 //TODO link to Useful Links!
 
 ## Implementation
