@@ -2,7 +2,7 @@
 
 This sample code is for **SPC** communication (devices in SPC mode) on Android devices.
 
-[SPC communication mode](./doc/communication-modes/spc)
+[SPC communication mode](../doc/communication-modes/spc)
 //TODO Add link See "communication-modes/spc"
 
 ## Requirements
