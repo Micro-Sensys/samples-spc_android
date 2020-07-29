@@ -2,6 +2,7 @@
 
 This sample code is for **SPC** communication (devices in SPC mode) on Android devices.
 
+[SPC communication mode](./doc/communication-modes/spc)
 //TODO Add link See "communication-modes/spc"
 
 ## Requirements
@@ -12,7 +13,7 @@ This sample code is for **SPC** communication (devices in SPC mode) on Android d
 * Micro-Sensys RFID reader (either Bluetooth or module) with appropriate script running
 * RFID transponders
 
-> For script check [Useful Links](#Useful-Links)
+> For compatible script files, check [Useful Links](#Useful-Links)
 
 [Useful Links](#Useful Links)
 //TODO link to Useful Links!
@@ -21,9 +22,7 @@ This sample code is for **SPC** communication (devices in SPC mode) on Android d
 This code shows how to use **SpcInterfaceControl** class to communicate with a device running on SPC mode. 
 Using this class the communication port can be open/closed. It automatically handles the data received and notifies the App using a Callback, and provides a function to send trigger commands to the script.
 
-> Class description is available under API documentation. See Useful Links
-
-//TODO link to Useful Links!
+> Class information is available under API documentation. See [Useful Links](#Useful-Links)
 
 ## Steps
 Just import this project into Android Studio, connect the Android device to your computer and deploy the SampleApp.
