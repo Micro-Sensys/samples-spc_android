@@ -12,7 +12,7 @@ This sample code is for **SPC** communication (devices in SPC mode) on Android d
 * Micro-Sensys RFID reader (either Bluetooth or module) with appropriate script running
 * RFID transponders
 
-> For script check [Useful Links](#Useful Links)
+> For script check [Useful Links](#Useful-Links)
 
 [Useful Links](#Useful Links)
 //TODO link to Useful Links!
@@ -28,7 +28,7 @@ Using this class the communication port can be open/closed. It automatically han
 ## Steps
 Just import this project into Android Studio, connect the Android device to your computer and deploy the SampleApp.
 If you have a iID®PENsolid or iID®POCKETwork paired over Bluetooth to the device, it will automatically list the devices in the Spinner. 
-//TODO screenshot URL!
+
 ![Screenshot](screenshot/SampleApp_SpcControl_AndroidJava.png)
 
  1. Select the device you wish to connect to, and press CONNECT. Once the connect process finishes, the result will be shown in the EditText on the bottom side, and if the device is connected, the READ/WRITE buttons will be enabled.
