@@ -39,11 +39,11 @@ If you have a iID®PENsolid or iID®POCKETwork paired over Bluetooth to the devi
  - [Scripts](https://www.microsensys.de/downloads/DevSamples/Sample%20Codes/SPC/Additionals/Sample%20scripts/)
  - [iID® INTERFACE configuration tool (tool to upload script to reader)](https://www.microsensys.de/downloads/CDContent/Install/iID%c2%ae%20interface%20config%20tool.zip)
 
-## Authors
-
-* **Victor Garcia** - *Initial work* - [MICS-VGarcia](https://github.com/MICS-VGarcia/)
-
 ## Contact
 
 * For coding questions or questions about this sample code, you can use [support@microsensys.de](mailto:support@microsensys.de)
 * For general questions about the company or our devices, you can contact us using [info@microsensys.de](mailto:info@microsensys.de)
+
+## Authors
+
+* **Victor Garcia** - *Initial work* - [MICS-VGarcia](https://github.com/MICS-VGarcia/)
