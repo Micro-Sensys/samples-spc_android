@@ -2,8 +2,7 @@
 
 This sample code is for **SPC** communication (devices in SPC mode) on Android devices.
 
-[Test LINK: SPC communication mode](../doc/communication-modes/spc)
-//TODO Add link See "communication-modes/spc"
+> For details on SPC communication check [Useful Links](#Useful-Links) 
 
 ## Requirements
 * Android Studio
@@ -35,9 +34,11 @@ If you have a iID®PENsolid or iID®POCKETwork paired over Bluetooth to the devi
 
 ## Useful Links
 
- - [AAR Library and API documentation](https://www.microsensys.de/downloads/DevSamples/Libraries/Android/microsensysRFID%20-%20aar%20library/)
- - [Scripts](https://www.microsensys.de/downloads/DevSamples/Sample%20Codes/SPC/Additionals/Sample%20scripts/)
- - [iID® INTERFACE configuration tool (tool to upload script to reader)](https://www.microsensys.de/downloads/CDContent/Install/iID%c2%ae%20interface%20config%20tool.zip)
+* [AAR Library and API documentation](https://www.microsensys.de/downloads/DevSamples/Libraries/Android/microsensysRFID%20-%20aar%20library/)
+* [Scripts](https://www.microsensys.de/downloads/DevSamples/Sample%20Codes/SPC/Additionals/Sample%20scripts/)
+* [iID® INTERFACE configuration tool (tool to upload script to reader)](https://www.microsensys.de/downloads/CDContent/Install/iID%c2%ae%20interface%20config%20tool.zip)
+* GitHub *doc* repository: [Micro-Sensys/doc](https://github.com/Micro-Sensys/doc)
+	* [communication-modes/spc](https://github.com/Micro-Sensys/doc/tree/master/communication-modes/spc)
 
 ## Contact
 
