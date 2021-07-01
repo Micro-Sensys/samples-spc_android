@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -20,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import de.microsensys.exceptions.MssException;
@@ -53,38 +53,18 @@ public class MainActivity extends AppCompatActivity {
 
         sp_DeviceToConnect = findViewById(R.id.spinner_device);
         bt_Connect = findViewById(R.id.button_connect);
-        bt_Connect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                connect();
-            }
-        });
+        bt_Connect.setOnClickListener(v -> connect());
         bt_Disconnect = findViewById(R.id.button_disconnect);
         bt_Disconnect.setEnabled(false);
-        bt_Disconnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                disconnect();
-            }
-        });
+        bt_Disconnect.setOnClickListener(v -> disconnect());
         et_TidRead = findViewById(R.id.edit_tidRead);
         bt_Read = findViewById(R.id.button_read);
         bt_Read.setEnabled(false);
-        bt_Read.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendReadRequest();
-            }
-        });
+        bt_Read.setOnClickListener(v -> sendReadRequest());
         et_DataRead = findViewById(R.id.edit_textRead);
         bt_Write = findViewById(R.id.button_write);
         bt_Write.setEnabled(false);
-        bt_Write.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendWriteRequest();
-            }
-        });
+        bt_Write.setOnClickListener(v -> sendWriteRequest());
         et_DataToWrite = findViewById(R.id.edit_textToWrite);
         et_DataToWrite.requestFocus();
         et_Logging = findViewById(R.id.edit_logging);
@@ -120,14 +100,11 @@ public class MainActivity extends AppCompatActivity {
         appendResultText(_toAppend, true);
     }
     private void appendResultText(final String _toAppend, final boolean _autoAppendNewLine){
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                if (_autoAppendNewLine)
-                    et_Logging.append(_toAppend + "\n");
-                else
-                    et_Logging.append(_toAppend);
-            }
+        new Handler(Looper.getMainLooper()).post(() -> {
+            if (_autoAppendNewLine)
+                et_Logging.append(_toAppend + "\n");
+            else
+                et_Logging.append(_toAppend);
         });
     }
 
@@ -175,13 +152,10 @@ public class MainActivity extends AppCompatActivity {
         //Open process finished
         if (mSpcInterfaceControl.getIsCommunicationPortOpen()) {
             // Communication port is open
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    et_Logging.append("\nCONNECTED\n");
-                    bt_Read.setEnabled(true);
-                    bt_Write.setEnabled(true);
-                }
+            new Handler(Looper.getMainLooper()).post(() -> {
+                et_Logging.append("\nCONNECTED\n");
+                bt_Read.setEnabled(true);
+                bt_Write.setEnabled(true);
             });
         } else {
             //Communication port is not open
@@ -216,7 +190,9 @@ public class MainActivity extends AppCompatActivity {
     private void sendWriteRequest() {
         //Hide the Keyboard
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(et_TidRead.getWindowToken(), 0);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(et_TidRead.getWindowToken(), 0);
+        }
 
         //Check if TID EditText is empty
         String tidText = et_TidRead.getText().toString();
@@ -249,30 +225,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private SpcInterfaceCallback mCallback = new SpcInterfaceCallback() {
+    private final SpcInterfaceCallback mCallback = new SpcInterfaceCallback() {
         @Override
         public void spcReaderHeartbeatReceived(final ReaderHeartbeat readerHeartbeat) {
             // Heartbeat received from reader
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    et_Logging.append("Heartbeat received: " + readerHeartbeat.getReaderID() + ", " + readerHeartbeat.getBatStatus().toString() + "\n");
-                    tv_ReaderID.setText(String.format("ReaderID : %d", readerHeartbeat.getReaderID()));
-                    tv_BatStatus.setText(String.format("BatStatus: %s", readerHeartbeat.getBatStatus()));
-                    tv_ResultColor.setBackgroundColor(Color.TRANSPARENT);
-                }
+            new Handler(Looper.getMainLooper()).post(() -> {
+                et_Logging.append("Heartbeat received: " + readerHeartbeat.getReaderID() + ", " + readerHeartbeat.getBatStatus().toString() + "\n");
+                tv_ReaderID.setText(String.format(Locale.getDefault(), "ReaderID : %d", readerHeartbeat.getReaderID()));
+                tv_BatStatus.setText(String.format("BatStatus: %s", readerHeartbeat.getBatStatus()));
+                tv_ResultColor.setBackgroundColor(Color.TRANSPARENT);
             });
         }
 
         @Override
         public void spcRawDataReceived(final RawDataReceived rawDataReceived) {
             //Data received from reader
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    decodeReceivedText(rawDataReceived.getDataReceived());
-                }
-            });
+            new Handler(Looper.getMainLooper()).post(() -> decodeReceivedText(rawDataReceived.getDataReceived()));
         }
     };
 
@@ -320,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if  (_receivedText.startsWith("RT")){
                     //Read transponder error
-                    if (_receivedText.substring(2, 2).equals("00")){
+                    if (_receivedText.startsWith("00", 2)){
                         // Result OK
                         tv_ResultColor.setBackgroundColor(Color.GREEN);
                     }
