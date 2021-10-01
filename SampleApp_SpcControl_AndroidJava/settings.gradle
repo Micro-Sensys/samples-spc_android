@@ -1,3 +1,2 @@
-include ':microsensysRFID_6.4'
 include ':app'
-rootProject.name = "SampleApp SpcControl AndroidJava 6.4"
+rootProject.name = "SampleApp SpcControl AndroidJava 6.6"
