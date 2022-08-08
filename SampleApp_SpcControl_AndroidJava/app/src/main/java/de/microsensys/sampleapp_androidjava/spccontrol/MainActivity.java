@@ -27,6 +27,8 @@ import de.microsensys.spc_control.RawDataReceived;
 import de.microsensys.spc_control.ReaderHeartbeat;
 import de.microsensys.spc_control.SpcInterfaceCallback;
 import de.microsensys.spc_control.SpcInterfaceControl;
+import de.microsensys.utils.PermissionFunctions;
+import de.microsensys.utils.PortTypeEnum;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -73,6 +75,42 @@ public class MainActivity extends AppCompatActivity {
         tv_ResultColor = findViewById(R.id.resultColor);
         tv_ResultColor.setBackgroundColor(Color.TRANSPARENT);
 
+//        //Fill spinner with list of paired POCKETwork devices
+//        List<String> deviceNames = new ArrayList<>();
+//        BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
+//        if (mAdapter!=null){
+//            //List of connected devices
+//            Set<BluetoothDevice> pairedDevices = mAdapter.getBondedDevices();
+//            if (pairedDevices.size()>0){
+//                for (BluetoothDevice device : pairedDevices) {
+//                    if (device.getName().startsWith("iID POCKETwork"))
+//                        deviceNames.add(device.getName());
+//                    if (device.getName().startsWith("iID PENsolid"))
+//                        deviceNames.add(device.getName());
+//                }
+//            }
+//        }
+//        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+//                this,
+//                android.R.layout.simple_spinner_item, deviceNames
+//        );
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        sp_DeviceToConnect.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+
+        //Check if there are permissions that need to be requested (USB permission is requested first when "initialize" is called)
+        String[] neededPermissions = PermissionFunctions.getNeededPermissions(getApplicationContext(), PortTypeEnum.Bluetooth);
+        if (neededPermissions.length > 0){
+            et_Logging.append("Allow permissions...");
+            requestPermissions(neededPermissions, 0);
+            return;
+        }
+
+        et_Logging.append("Permissions granted...");
         //Fill spinner with list of paired POCKETwork devices
         List<String> deviceNames = new ArrayList<>();
         BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -119,13 +157,21 @@ public class MainActivity extends AppCompatActivity {
         }
         sp_DeviceToConnect.setEnabled(false);
 
+        //Check if there are permissions that need to be requested (USB permission is requested first when "initialize" is called)
+        String[] neededPermissions = PermissionFunctions.getNeededPermissions(getApplicationContext(), PortTypeEnum.Bluetooth);
+        if (neededPermissions.length > 0){
+            et_Logging.append("Allow permissions and try again.");
+            requestPermissions(neededPermissions, 0);
+            return;
+        }
+
         //Initialize SpcInterfaceControl instance.
-        //  PortType = 2 --> Bluteooth
+        //  PortType = PortTypeEnum.Bluetooth --> Bluteooth
         //  PortName = selected device in Spinner --> Device name as shown in Settings
         mSpcInterfaceControl = new SpcInterfaceControl(
                 this, //Instance to this Activity
                 mCallback, //Callback where events will be notified
-                2, //2 == Bluetooth
+                PortTypeEnum.Bluetooth, // Bluetooth
                 sp_DeviceToConnect.getSelectedItem().toString());
         //Configure DataPrefix and DataSuffix
         //  SpcInterfaceControl will automatically use this to divide the received data and call
@@ -166,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
     private void disconnect() {
         disposeSpcControl();
         bt_Connect.setEnabled(true);
+        sp_DeviceToConnect.setEnabled(true);
         bt_Disconnect.setEnabled(false);
         bt_Read.setEnabled(false);
         bt_Write.setEnabled(false);
@@ -328,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
                 if (mSpcInterfaceControl.getIsCommunicationPortOpening()){
                     //Still trying to connect -> Wait and continue
                     try {
+                        //noinspection BusyWait
                         Thread.sleep(200);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
