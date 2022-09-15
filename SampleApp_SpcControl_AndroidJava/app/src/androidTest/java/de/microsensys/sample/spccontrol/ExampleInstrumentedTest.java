@@ -1,4 +1,4 @@
-package de.microsensys.sampleapp_androidjava.spccontrol;
+package de.microsensys.sample.spccontrol;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("de.microsensys.sampleapp_androidjava.spccontrol", appContext.getPackageName());
+        assertEquals("de.microsensys.sample.spccontrol", appContext.getPackageName());
     }
 }

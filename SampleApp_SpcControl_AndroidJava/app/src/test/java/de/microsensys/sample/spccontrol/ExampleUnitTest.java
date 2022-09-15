@@ -1,4 +1,4 @@
-package de.microsensys.sampleapp_androidjava.spccontrol;
+package de.microsensys.sample.spccontrol;
 
 import org.junit.Test;
 
