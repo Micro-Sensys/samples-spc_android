@@ -1,21 +1,21 @@
-package de.microsensys.sampleapp_androidjava.spccontrol;
+package de.microsensys.sample.spccontrol;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,28 +74,6 @@ public class MainActivity extends AppCompatActivity {
         tv_BatStatus = findViewById(R.id.textView_BatStatus);
         tv_ResultColor = findViewById(R.id.resultColor);
         tv_ResultColor.setBackgroundColor(Color.TRANSPARENT);
-
-//        //Fill spinner with list of paired POCKETwork devices
-//        List<String> deviceNames = new ArrayList<>();
-//        BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
-//        if (mAdapter!=null){
-//            //List of connected devices
-//            Set<BluetoothDevice> pairedDevices = mAdapter.getBondedDevices();
-//            if (pairedDevices.size()>0){
-//                for (BluetoothDevice device : pairedDevices) {
-//                    if (device.getName().startsWith("iID POCKETwork"))
-//                        deviceNames.add(device.getName());
-//                    if (device.getName().startsWith("iID PENsolid"))
-//                        deviceNames.add(device.getName());
-//                }
-//            }
-//        }
-//        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-//                this,
-//                android.R.layout.simple_spinner_item, deviceNames
-//        );
-//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        sp_DeviceToConnect.setAdapter(adapter);
     }
 
     @Override
@@ -104,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Check if there are permissions that need to be requested (USB permission is requested first when "initialize" is called)
         String[] neededPermissions = PermissionFunctions.getNeededPermissions(getApplicationContext(), PortTypeEnum.Bluetooth);
-        if (neededPermissions.length > 0){
+        if (neededPermissions.length > 0) {
             et_Logging.append("Allow permissions...");
             requestPermissions(neededPermissions, 0);
             return;
@@ -114,8 +92,12 @@ public class MainActivity extends AppCompatActivity {
         //Fill spinner with list of paired POCKETwork devices
         List<String> deviceNames = new ArrayList<>();
         BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mAdapter!=null){
+        if (mAdapter != null) {
             //List of connected devices
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Already requested in snippet above, but Android Studio throws an error because not explicitly checked for the exception in code
+                return;
+            }
             Set<BluetoothDevice> pairedDevices = mAdapter.getBondedDevices();
             if (pairedDevices.size()>0){
                 for (BluetoothDevice device : pairedDevices) {
@@ -134,11 +116,20 @@ public class MainActivity extends AppCompatActivity {
         sp_DeviceToConnect.setAdapter(adapter);
     }
 
+    @Override
+    protected void onStop() {
+        if (mSpcInterfaceControl != null){
+            mSpcInterfaceControl.closeCommunicationPort();
+            mSpcInterfaceControl = null;
+        }
+        super.onStop();
+    }
+
     private void appendResultText(String _toAppend){
         appendResultText(_toAppend, true);
     }
     private void appendResultText(final String _toAppend, final boolean _autoAppendNewLine){
-        new Handler(Looper.getMainLooper()).post(() -> {
+        runOnUiThread(() -> {
             if (_autoAppendNewLine)
                 et_Logging.append(_toAppend + "\n");
             else
@@ -198,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
         //Open process finished
         if (mSpcInterfaceControl.getIsCommunicationPortOpen()) {
             // Communication port is open
-            new Handler(Looper.getMainLooper()).post(() -> {
+            runOnUiThread(() -> {
                 et_Logging.append("\nCONNECTED\n");
                 bt_Read.setEnabled(true);
                 bt_Write.setEnabled(true);
@@ -226,12 +217,8 @@ public class MainActivity extends AppCompatActivity {
         et_DataRead.setText("");
         tv_ResultColor.setBackgroundColor(Color.TRANSPARENT);
 
-        try {
-            mSpcInterfaceControl.sendSpcRequest(command);
-            appendResultText("Sent READ Request: " + command);
-        } catch (MssException e) {
-            e.printStackTrace();
-        }
+        mSpcInterfaceControl.sendSpcRequest(command);
+        appendResultText("Sent READ Request: " + command);
     }
 
     private void sendWriteRequest() {
@@ -264,19 +251,15 @@ public class MainActivity extends AppCompatActivity {
 
         tv_ResultColor.setBackgroundColor(Color.TRANSPARENT);
 
-        try {
-            mSpcInterfaceControl.sendSpcRequest(command);
-            appendResultText("Sent WRITE Request: " + command);
-        } catch (MssException e) {
-            e.printStackTrace();
-        }
+        mSpcInterfaceControl.sendSpcRequest(command);
+        appendResultText("Sent WRITE Request: " + command);
     }
 
     private final SpcInterfaceCallback mCallback = new SpcInterfaceCallback() {
         @Override
         public void spcReaderHeartbeatReceived(final ReaderHeartbeat readerHeartbeat) {
             // Heartbeat received from reader
-            new Handler(Looper.getMainLooper()).post(() -> {
+            runOnUiThread(() -> {
                 et_Logging.append("Heartbeat received: " + readerHeartbeat.getReaderID() + ", " + readerHeartbeat.getBatStatus().toString() + "\n");
                 tv_ReaderID.setText(String.format(Locale.getDefault(), "ReaderID : %d", readerHeartbeat.getReaderID()));
                 tv_BatStatus.setText(String.format("BatStatus: %s", readerHeartbeat.getBatStatus()));
@@ -287,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void spcRawDataReceived(final RawDataReceived rawDataReceived) {
             //Data received from reader
-            new Handler(Looper.getMainLooper()).post(() -> decodeReceivedText(rawDataReceived.getDataReceived()));
+            runOnUiThread(() -> decodeReceivedText(rawDataReceived.getDataReceived()));
         }
     };
 
