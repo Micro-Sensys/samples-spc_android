@@ -1,20 +1,22 @@
 package de.microsensys.sampleapp_spccontrol_andkotlin
 
-import android.Manifest
-import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import de.microsensys.exceptions.MssException
 import de.microsensys.spc_control.RawDataReceived
 import de.microsensys.spc_control.ReaderHeartbeat
@@ -26,54 +28,61 @@ import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var sp_DeviceToConnect: Spinner
-    private lateinit var bt_Connect: Button
-    private lateinit var bt_Disconnect: Button
-    private lateinit var et_TidRead: EditText
-    private lateinit var bt_Read: Button
-    private lateinit var et_DataRead: EditText
-    private lateinit var bt_Write: Button
-    private lateinit var et_DataToWrite: EditText
-    private lateinit var et_Logging: EditText
-    private lateinit var tv_ReaderID: TextView
-    private lateinit var tv_BatStatus: TextView
-    private lateinit var tv_ResultColor: TextView
+    private lateinit var spDeviceToConnect: Spinner
+    private lateinit var btConnect: Button
+    private lateinit var btDisconnect: Button
+    private lateinit var etTidRead: EditText
+    private lateinit var btRead: Button
+    private lateinit var etDataRead: EditText
+    private lateinit var btWrite: Button
+    private lateinit var etDataToWrite: EditText
+    private lateinit var etLogging: EditText
+    private lateinit var tvReaderID: TextView
+    private lateinit var tvBatStatus: TextView
+    private lateinit var tvResultColor: TextView
+
     private var mSpcInterfaceControl: SpcInterfaceControl? = null
     private var mCheckThread: CheckConnectingReader? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
-        sp_DeviceToConnect = findViewById(R.id.spinner_device)
-        bt_Connect = findViewById(R.id.button_connect)
-        bt_Connect.setOnClickListener {
+        spDeviceToConnect = findViewById(R.id.spinner_device)
+        btConnect = findViewById(R.id.button_connect)
+        btConnect.setOnClickListener {
             connect()
         }
-        bt_Disconnect = findViewById(R.id.button_disconnect)
-        bt_Disconnect.isEnabled = false
-        bt_Disconnect.setOnClickListener {
+        btDisconnect = findViewById(R.id.button_disconnect)
+        btDisconnect.isEnabled = false
+        btDisconnect.setOnClickListener {
             disconnect()
         }
-        et_TidRead = findViewById(R.id.edit_tidRead)
-        bt_Read = findViewById(R.id.button_read)
-        bt_Read.isEnabled = false
-        bt_Read.setOnClickListener {
-                sendReadRequest()
+        etTidRead = findViewById(R.id.edit_tidRead)
+        btRead = findViewById(R.id.button_read)
+        btRead.isEnabled = false
+        btRead.setOnClickListener {
+            sendReadRequest()
         }
-        et_DataRead = findViewById(R.id.edit_textRead)
-        bt_Write = findViewById(R.id.button_write)
-        bt_Write.isEnabled = false
-        bt_Write.setOnClickListener {
-                sendWriteRequest()
+        etDataRead = findViewById(R.id.edit_textRead)
+        btWrite = findViewById(R.id.button_write)
+        btWrite.isEnabled = false
+        btWrite.setOnClickListener {
+            sendWriteRequest()
         }
-        et_DataToWrite = findViewById(R.id.edit_textToWrite)
-        et_DataToWrite.requestFocus()
-        et_Logging = findViewById(R.id.edit_logging)
-        tv_ReaderID = findViewById(R.id.textView_ReaderId)
-        tv_BatStatus = findViewById(R.id.textView_BatStatus)
-        tv_ResultColor = findViewById(R.id.resultColor)
-        tv_ResultColor.setBackgroundColor(Color.TRANSPARENT)
+        etDataToWrite = findViewById(R.id.edit_textToWrite)
+        etDataToWrite.requestFocus()
+        etLogging = findViewById(R.id.edit_logging)
+        tvReaderID = findViewById(R.id.textView_ReaderId)
+        tvBatStatus = findViewById(R.id.textView_BatStatus)
+        tvResultColor = findViewById(R.id.resultColor)
+        tvResultColor.setBackgroundColor(Color.TRANSPARENT)
     }
 
     override fun onPostResume() {
@@ -82,24 +91,25 @@ class MainActivity : AppCompatActivity() {
         //Check if there are permissions that need to be requested (USB permission is requested first when "initialize" is called)
         val neededPermissions = PermissionFunctions.getNeededPermissions(applicationContext, PortTypeEnum.Bluetooth)
         if (neededPermissions.isNotEmpty()) {
-            et_Logging.append("Allow permissions...")
+            etLogging.append("Allow permissions...")
             requestPermissions(neededPermissions, 0)
             return
         }
-        et_Logging.append("Permissions granted...")
+        etLogging.append("Permissions granted...")
         //Fill spinner with list of paired POCKETwork devices
         val deviceNames: MutableList<String> = ArrayList()
-        val mAdapter = BluetoothAdapter.getDefaultAdapter()
+        val bluetoothManager = applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        val mAdapter = bluetoothManager.adapter
         if (mAdapter != null) {
             //List of connected devices
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Already requested in snippet above, but Android Studio throws an error because not explicitly checked for the exception in code
                     return
                 }
             }
             val pairedDevices = mAdapter.bondedDevices
-            if (pairedDevices.size > 0) {
+            if (pairedDevices.isNotEmpty()) {
                 for (device in pairedDevices) {
                     if (device.name.startsWith("iID POCKETwork")) deviceNames.add(device.name)
                     if (device.name.startsWith("iID PENsolid")) deviceNames.add(device.name)
@@ -111,11 +121,11 @@ class MainActivity : AppCompatActivity() {
             android.R.layout.simple_spinner_item, deviceNames
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        sp_DeviceToConnect.adapter = adapter
+        spDeviceToConnect.adapter = adapter
     }
 
     override fun onStop() {
-		//For this sample, the reader must be not connected when stopped
+        //For this sample, the reader must be not connected when stopped
         if (mSpcInterfaceControl != null) {
             mSpcInterfaceControl!!.closeCommunicationPort()
             mSpcInterfaceControl = null
@@ -123,43 +133,43 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
     }
 
-    private fun appendResultText(_toAppend: String, _autoAppendNewLine: Boolean = true) {
+    private fun appendResultText(toAppend: String, autoAppendNewLine: Boolean = true) {
         runOnUiThread {
-            if (_autoAppendNewLine)
-                et_Logging.append(_toAppend + "\n")
+            if (autoAppendNewLine)
+                etLogging.append(toAppend + "\n")
             else
-                et_Logging.append(_toAppend)
+                etLogging.append(toAppend)
         }
     }
 
     private fun connect() {
-        et_Logging.setText("")
+        etLogging.setText("")
 
         //Before opening a new communication port, make sure that previous instance is disposed
         disposeSpcControl()
-        if (sp_DeviceToConnect.selectedItemPosition == -1) {
+        if (spDeviceToConnect.selectedItemPosition == -1) {
             //TODO notify user to select a device to connect to!
             return
         }
-        sp_DeviceToConnect.isEnabled = false
+        spDeviceToConnect.isEnabled = false
 
         //Check if there are permissions that need to be requested (USB permission is requested first when "initialize" is called)
         val neededPermissions =
             PermissionFunctions.getNeededPermissions(applicationContext, PortTypeEnum.Bluetooth)
         if (neededPermissions.isNotEmpty()) {
-            et_Logging.append("Allow permissions and try again.")
+            etLogging.append("Allow permissions and try again.")
             requestPermissions(neededPermissions, 0)
             return
         }
 
         //Initialize SpcInterfaceControl instance.
-        //  PortType = PortTypeEnum.Bluetooth --> Bluteooth
+        //  PortType = PortTypeEnum.Bluetooth --> Bluetooth
         //  PortName = selected device in Spinner --> Device name as shown in Settings
         mSpcInterfaceControl = SpcInterfaceControl(
             this,  //Instance to this Activity
             mCallback,  //Callback where events will be notified
             PortTypeEnum.Bluetooth,  // Bluetooth
-            sp_DeviceToConnect.selectedItem.toString()
+            spDeviceToConnect.selectedItem.toString()
         )
         //Configure DataPrefix and DataSuffix
         //  SpcInterfaceControl will automatically use this to divide the received data and call
@@ -171,14 +181,14 @@ class MainActivity : AppCompatActivity() {
         try {
             mSpcInterfaceControl!!.openCommunicationPort()
             //No exception --> Check for process in a separate thread
-            et_Logging.append("Connecting...")
+            etLogging.append("Connecting...")
             startCheckConnectingThread()
-            bt_Connect.isEnabled = false
-            bt_Disconnect.isEnabled = true
+            btConnect.isEnabled = false
+            btDisconnect.isEnabled = true
         } catch (e: MssException) {
             e.printStackTrace()
-            et_Logging.append("Error opening port.")
-            sp_DeviceToConnect.isEnabled = true
+            etLogging.append("Error opening port.")
+            spDeviceToConnect.isEnabled = true
         }
     }
 
@@ -187,9 +197,9 @@ class MainActivity : AppCompatActivity() {
         if (mSpcInterfaceControl!!.isCommunicationPortOpen) {
             // Communication port is open
             runOnUiThread {
-                et_Logging.append("\nCONNECTED\n")
-                bt_Read.isEnabled = true
-                bt_Write.isEnabled = true
+                etLogging.append("\nCONNECTED\n")
+                btRead.isEnabled = true
+                btWrite.isEnabled = true
             }
         } else {
             //Communication port is not open
@@ -199,19 +209,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun disconnect() {
         disposeSpcControl()
-        bt_Connect.isEnabled = true
-        sp_DeviceToConnect.isEnabled = true
-        bt_Disconnect.isEnabled = false
-        bt_Read.isEnabled = false
-        bt_Write.isEnabled = false
+        btConnect.isEnabled = true
+        spDeviceToConnect.isEnabled = true
+        btDisconnect.isEnabled = false
+        btRead.isEnabled = false
+        btWrite.isEnabled = false
     }
 
     private fun sendReadRequest() {
         // Generate "SCAN" request and send to reader
         val command = "~T" //SOH + Read-Identifier
-        et_TidRead.setText("")
-        et_DataRead.setText("")
-        tv_ResultColor.setBackgroundColor(Color.TRANSPARENT)
+        etTidRead.setText("")
+        etDataRead.setText("")
+        tvResultColor.setBackgroundColor(Color.TRANSPARENT)
         mSpcInterfaceControl!!.sendSpcRequest(command)
         appendResultText("Sent READ Request: $command")
     }
@@ -219,10 +229,10 @@ class MainActivity : AppCompatActivity() {
     private fun sendWriteRequest() {
         //Hide the Keyboard
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(et_TidRead.windowToken, 0)
+        imm.hideSoftInputFromWindow(etTidRead.windowToken, 0)
 
         //Check if TID EditText is empty
-        val tidText = et_TidRead.text.toString()
+        val tidText = etTidRead.text.toString()
         if (tidText.isEmpty()) {
             //TODO notify user that TID field is empty
             return
@@ -231,7 +241,7 @@ class MainActivity : AppCompatActivity() {
             //TODO notify user that something is wrong with TID string
             return
         }
-        val dataToWrite = et_DataToWrite.text.toString()
+        val dataToWrite = etDataToWrite.text.toString()
         if (dataToWrite.isEmpty()) {
             //TODO notify user that DataToWrite field is empty
             return
@@ -241,7 +251,7 @@ class MainActivity : AppCompatActivity() {
         var command = "~W" //SOH + Write-Identifier
         command += tidText //TID
         command += dataToWrite
-        tv_ResultColor.setBackgroundColor(Color.TRANSPARENT)
+        tvResultColor.setBackgroundColor(Color.TRANSPARENT)
         mSpcInterfaceControl!!.sendSpcRequest(command)
         appendResultText("Sent WRITE Request: $command")
     }
@@ -250,14 +260,14 @@ class MainActivity : AppCompatActivity() {
         override fun spcReaderHeartbeatReceived(readerHeartbeat: ReaderHeartbeat) {
             // Heartbeat received from reader
             runOnUiThread {
-                et_Logging.append("Heartbeat received: " + readerHeartbeat.readerID + ", " + readerHeartbeat.batStatus.toString() + "\n")
-                tv_ReaderID.text = String.format(
+                etLogging.append("Heartbeat received: " + readerHeartbeat.readerID + ", " + readerHeartbeat.batStatus.toString() + "\n")
+                tvReaderID.text = String.format(
                     Locale.getDefault(),
                     "ReaderID : %d",
                     readerHeartbeat.readerID
                 )
-                tv_BatStatus.text = String.format("BatStatus: %s", readerHeartbeat.batStatus)
-                tv_ResultColor.setBackgroundColor(Color.TRANSPARENT)
+                tvBatStatus.text = String.format("BatStatus: %s", readerHeartbeat.batStatus)
+                tvResultColor.setBackgroundColor(Color.TRANSPARENT)
             }
         }
 
@@ -267,11 +277,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun decodeReceivedText(_receivedText: String) {
+    private fun decodeReceivedText(receivedText: String) {
         // Remove <CR> if present
-        var text = _receivedText
+        var text = receivedText
         if (text.endsWith("\r"))
-            text = text.substring(0, text.length - 1)
+            text = text.take(text.length - 1)
         appendResultText("Data received: $text")
         when (text[0]) {
             'T' -> if (text.length >= 16) { //Check if minimum length received
@@ -279,7 +289,7 @@ class MainActivity : AppCompatActivity() {
                 text = text.substring(1)
 
                 //Get Personal-Nr., Ausweis-Nr. or Equi-Nr. (0-15)
-                var firstData = text.substring(0, 16)
+                var firstData = text.take(16)
                 firstData = firstData.replaceFirst(
                     "\\x00++$".toRegex(),
                     ""
@@ -295,9 +305,9 @@ class MainActivity : AppCompatActivity() {
                         ""
                     ) //Remove possible not initialized data from the end of the String
                 }
-                et_TidRead.setText(firstData)
-                et_DataRead.setText(secondData)
-                tv_ResultColor.setBackgroundColor(Color.GREEN)
+                etTidRead.setText(firstData)
+                etDataRead.setText(secondData)
+                tvResultColor.setBackgroundColor(Color.GREEN)
             }
 
             'R' -> {
@@ -305,21 +315,21 @@ class MainActivity : AppCompatActivity() {
                     //Write result
                     when (text) {
                         "RW00" ->                             // Result OK
-                            tv_ResultColor.setBackgroundColor(Color.GREEN)
+                            tvResultColor.setBackgroundColor(Color.GREEN)
 
                         "RW24" ->                             //Transponder not found or error writing
-                            tv_ResultColor.setBackgroundColor(Color.RED)
+                            tvResultColor.setBackgroundColor(Color.RED)
                     }
                 }
                 if (text.startsWith("RT")) {
                     //Read transponder error
                     if (text.startsWith("00", 2)) {
                         // Result OK
-                        tv_ResultColor.setBackgroundColor(Color.GREEN)
+                        tvResultColor.setBackgroundColor(Color.GREEN)
                     } else {
                         // Error
                         // Example "RT2400" --> Transponder not found or error reading
-                        tv_ResultColor.setBackgroundColor(Color.RED)
+                        tvResultColor.setBackgroundColor(Color.RED)
                     }
                 }
             }
@@ -330,7 +340,6 @@ class MainActivity : AppCompatActivity() {
         if (mSpcInterfaceControl != null) mSpcInterfaceControl!!.closeCommunicationPort()
         mSpcInterfaceControl = null
     }
-
     private fun startCheckConnectingThread() {
         if (mCheckThread != null) {
             mCheckThread!!.cancel()
@@ -339,8 +348,7 @@ class MainActivity : AppCompatActivity() {
         mCheckThread = CheckConnectingReader()
         mCheckThread!!.start()
     }
-
-    private inner class CheckConnectingReader internal constructor() : Thread() {
+    private inner class CheckConnectingReader : Thread() {
         private var loop = true
         override fun run() {
             while (loop) {

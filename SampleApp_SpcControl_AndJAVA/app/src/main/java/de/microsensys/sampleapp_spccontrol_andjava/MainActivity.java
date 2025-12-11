@@ -1,15 +1,10 @@
 package de.microsensys.sampleapp_spccontrol_andjava;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -17,6 +12,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +54,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         sp_DeviceToConnect = findViewById(R.id.spinner_device);
         bt_Connect = findViewById(R.id.button_connect);
@@ -95,16 +103,14 @@ public class MainActivity extends AppCompatActivity {
         BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mAdapter != null) {
             //List of connected devices
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Already requested in snippet above, but Android Studio throws an error because not explicitly checked for the exception in code
-                    return;
-                }
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Already requested in snippet above, but Android Studio throws an error because not explicitly checked for the exception in code
+                return;
             }
             Set<BluetoothDevice> pairedDevices = mAdapter.getBondedDevices();
-            if (pairedDevices.size()>0){
+            if (!pairedDevices.isEmpty()){
                 for (BluetoothDevice device : pairedDevices) {
-                    if (device.getName().startsWith("iID POCKETwork"))
+                    if (device.getName().startsWith("iID POCKET"))
                         deviceNames.add(device.getName());
                     if (device.getName().startsWith("iID PENsolid"))
                         deviceNames.add(device.getName());
@@ -121,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-		//For this sample, the reader must be not connected when stopped
+        //For this sample, the reader must be not connected when stopped
         if (mSpcInterfaceControl != null){
             mSpcInterfaceControl.closeCommunicationPort();
             mSpcInterfaceControl = null;
@@ -150,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
             //TODO notify user to select a device to connect to!
             return;
         }
-        sp_DeviceToConnect.setEnabled(false);
 
         //Check if there are permissions that need to be requested (USB permission is requested first when "initialize" is called)
         String[] neededPermissions = PermissionFunctions.getNeededPermissions(getApplicationContext(), PortTypeEnum.Bluetooth);
@@ -159,6 +164,8 @@ public class MainActivity extends AppCompatActivity {
             requestPermissions(neededPermissions, 0);
             return;
         }
+
+        sp_DeviceToConnect.setEnabled(false);
 
         //Initialize SpcInterfaceControl instance.
         //  PortType = PortTypeEnum.Bluetooth --> Bluteooth
