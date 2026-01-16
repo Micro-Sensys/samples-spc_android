@@ -33,6 +33,7 @@ import de.microsensys.spc_control.SpcInterfaceControl;
 import de.microsensys.utils.PermissionFunctions;
 import de.microsensys.utils.PortTypeEnum;
 
+@SuppressWarnings("ALL")
 public class MainActivity extends AppCompatActivity {
 
     Spinner sp_DeviceToConnect;
